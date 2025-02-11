@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة المسابقات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a4a4a;
+            --secondary-color: #6c757d;
+            --accent-color: #2c3e50;
+        }
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: var(--primary-color);
+        }
+        .competition-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .admin-dashboard, .competition-modal {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .competition-status {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-not-started { background-color: #ffeeba; color: #856404; }
+        .status-active { background-color: #d4edda; color: #155724; }
+        .status-completed { background-color: #f8d7da; color: #721c24; }
+        .leaderboard {
+            background-color: #f1f3f5;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .timer {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .response-modal {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="competition-container">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 id="site-title">منصة المسابقات</h1>
+                <div>
+                    <button class="btn btn-primary" type="button" onclick="openAdminLoginModal()">لوحة التحكم</button>
+                </div>
+            </div>
+
+            <!-- Competitions List -->
+            <div id="competitionsList">
+                <!-- Competitions will be dynamically added here -->
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="leaderboard mt-4">
+                <h4 class="text-center mb-3">المتصدرون</h4>
+                <div id="leaderboardList" class="row">
+                    <!-- Leaderboard entries will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- User Registration Modal -->
+        <div class="modal fade" id="registrationModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تسجيل المشاركة</h5>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="participantName" class="form-control mb-3" placeholder="الاسم">
+                        <input type="tel" id="participantMobile" class="form-control" placeholder="رقم الجوال">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="startCompetition()">بدء المسابقة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competition Modal -->
+        <div class="modal fade" id="competitionModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="competitionModalTitle"></h5>
+                    </div>
+                    <div class="modal-body" id="questionsContainer">
+                        <!-- Questions will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responses Modal -->
+        <div class="modal fade" id="responsesModal" tabindex="-1">
+            <div class="modal-dialog modal-lg response-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">استجابات المشاركين</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="responsesContainer">
+                        <!-- Responses will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminLoginModalLabel">تسجيل دخول المسؤول</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="password" id="adminPassword" class="form-control" placeholder="كلمة المرور">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary" onclick="adminLogin()">دخول</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="admin-dashboard mt-4">
+        <h2 class="text-center mb-4">لوحة إدارة المسابقات</h2>
+        
+        <!-- Competition Creation Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                إنشاء مسابقة جديدة
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>عنوان المسابقة</label>
+                        <input type="text" id="competitionTitle" class="form-control" placeholder="أدخل عنوان المسابقة">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>تاريخ البدء</label>
+                        <input type="datetime-local" id="startDateTime" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>تاريخ الانتهاء</label>
+                        <input type="datetime-local" id="endDateTime" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Creation Section -->
+        <div class="card">
+            <div class="card-header">
+                إنشاء الأسئلة
+            </div>
+            <div class="card-body">
+                <div class="question-type-section">
+                    <h5>نوع السؤال</h5>
+                    <div class="btn-group mb-3" role="group">
+                        <input type="radio" class="btn-check" name="questionType" id="trueOrFalse" autocomplete="off" value="trueOrFalse">
+                        <label class="btn btn-outline-primary" for="trueOrFalse">صح أو خطأ</label>
+
+                        <input type="radio" class="btn-check" name="questionType" id="multipleChoice" autocomplete="off" value="multipleChoice">
+                        <label class="btn btn-outline-primary" for="multipleChoice">اختيار من متعدد</label>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="mb-3">
+                        <label>نص السؤال</label>
+                        <textarea id="questionText" class="form-control" rows="3" placeholder="أدخل نص السؤال"></textarea>
+                    </div>
+
+                    <!-- True/False Options -->
+                    <div id="trueOrFalseSection" style="display:none;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="trueOrFalseAnswer" id="trueAnswer" value="true">
+                            <label class="form-check-label" for="trueAnswer">صح</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="trueOrFalseAnswer" id="falseAnswer" value="false">
+                            <label class="form-check-label" for="falseAnswer">خطأ</label>
+                        </div>
+                    </div>
+
+                    <!-- Multiple Choice Options -->
+                    <div id="multipleChoiceSection" style="display:none;">
+                        <div class="mb-3">
+                            <label>الخيار الأول</label>
+                            <input type="text" id="choice1" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>الخيار الثاني</label>
+                            <input type="text" id="choice2" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>الخيار الثالث</label>
+                            <input type="text" id="choice3" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>الإجابة الصحيحة</label>
+                            <select id="correctChoice" class="form-select">
+                                <option value="1">الخيار الأول</option>
+                                <option value="2">الخيار الثاني</option>
+                                <option value="3">الخيار الثالث</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Points -->
+                    <div class="mb-3">
+                        <label>النقاط</label>
+                        <input type="number" id="questionPoints" class="form-control" min="1" max="10" value="1">
+                    </div>
+
+                    <!-- Add Question Button -->
+                    <button class="btn btn-success" onclick="addQuestion()">إضافة السؤال</button>
+                </div>
+
+                <!-- Questions Preview -->
+                <div id="questionsPreview" class="mt-4">
+                    <h5>الأسئلة المضافة</h5>
+                    <div id="questionsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Competition Button -->
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="saveCompetition()">حفظ المسابقة</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Enhanced Application State
+        const state = {
+            siteTitle: 'منصة المسابقات',
+            adminPassword: '12345',
+            competitions: [],
+            currentCompetition: null,
+            currentParticipant: null,
+            participants: [],
+            responses: {}
+        };
+
+        // Utility Functions
+        function getCurrentDateTime() {
+            return new Date().toISOString();
+        }
+
+        function getCompetitionStatus(competition) {
+            const now = new Date();
+            const startDate = new Date(competition.startDate);
+            const endDate = new Date(competition.endDate);
+
+            if (now < startDate) return 'لم تبدأ';
+            if (now > endDate) return 'منتهية';
+            return 'جارية';
+        }
+
+        // Render Competitions List
+        function renderCompetitions() {
+            const competitionsList = document.getElementById('competitionsList');
+            competitionsList.innerHTML = '';
+
+            state.competitions.forEach((competition, index) => {
+                const status = getCompetitionStatus(competition);
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">${competition.title}</h5>
+                        <p class="card-text">
+                            <small>تاريخ البدء: ${new Date(competition.startDate).toLocaleString()}</small><br>
+                            <small>تاريخ الانتهاء: ${new Date(competition.endDate).toLocaleString()}</small>
+                            <br>
+                            <small>عدد الأسئلة: ${competition.questions.length}</small>
+                        </p>
+                        <div class="competition-status ${
+                            status === 'لم تبدأ' ? 'status-not-started' :
+                            status === 'جارية' ? 'status-active' : 'status-completed'
+                        }">
+                            حالة المسابقة: ${status}
+                        </div>
+                        ${status === 'جارية' ? `
+                            <button class="btn btn-primary mt-2" onclick="selectCompetition(${index})">
+                                المشاركة
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                competitionsList.appendChild(card);
+            });
+
+            renderLeaderboard();
+        }
+
+        // Render Leaderboard
+        function renderLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            // Sort participants by total points in descending order
+            const sortedParticipants = state.participants
+                .sort((a, b) => b.totalPoints - a.totalPoints)
+                .slice(0, 10); // Top 10 participants
+
+            sortedParticipants.forEach((participant, index) => {
+                const leaderboardItem = document.createElement('div');
+                leaderboardItem.className = 'col-12 mb-2';
+                leaderboardItem.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <span>${index + 1}. ${participant.name}</span>
+                        <span class="badge bg-primary">${participant.totalPoints} نقطة</span>
+                    </div>
+                `;
+                leaderboardList.appendChild(leaderboardItem);
+            });
+        }
+
+        // Select Competition
+        function selectCompetition(index) {
+            state.currentCompetition = state.competitions[index];
+            new bootstrap.Modal(document.getElementById('registrationModal')).show();
+        }
+
+        // Start Competition
+        function startCompetition() {
+            const name = document.getElementById('participantName').value;
+            const mobile = document.getElementById('participantMobile').value;
+
+            if (!name || !mobile) {
+                alert('يرجى إدخال الاسم ورقم الجوال');
+                return;
+            }
+
+            // Create or update participant
+            let participant = state.participants.find(p => p.mobile === mobile);
+            if (!participant) {
+                participant = {
+                    name: name,
+                    mobile: mobile,
+                    totalPoints: 0,
+                    responses: {}
+                };
+                state.participants.push(participant);
+            }
+            state.currentParticipant = participant;
+
+            // Hide registration modal and show competition modal
+            new bootstrap.Modal(document.getElementById('registrationModal')).hide();
+            renderQuestions();
+            new bootstrap.Modal(document.getElementById('competitionModal')).show();
+        }
+
+        // Render Questions
+        function renderQuestions() {
+            const questionsContainer = document.getElementById('questionsContainer');
+            const competitionModalTitle = document.getElementById('competitionModalTitle');
+            
+            questionsContainer.innerHTML = '';
+            competitionModalTitle.textContent = state.currentCompetition.title;
+
+            state.currentCompetition.questions.forEach((question, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'card mb-3';
+                questionCard.innerHTML = `
+                    <div class="card-body">
+                        <h6 class="card-title">السؤال ${index + 1} (${question.points} نقاط)</h6>
+                        <p>${question.text}</p>
+                        
+                        ${question.type === 'trueOrFalse' ? `
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="answer-${index}" id="true-${index}" value="true">
+                                <label class="btn btn-outline-primary" for="true-${index}">صح</label>
+
+                                <input type="radio" class="btn-check" name="answer-${index}" id="false-${index}" value="false">
+                                <label class="btn btn-outline-primary" for="false-${index}">خطأ</label>
+                            </div>
+                        ` : `
+                            <div class="btn-group-vertical" role="group">
+                                <input type="radio" class="btn-check" name="answer-${index}" id="choice1-${index}" value="0">
+                                <label class="btn btn-outline-primary" for="choice1-${index}">${question.choices[0]}</label>
+
+                                <input type="radio" class="btn-check" name="answer-${index}" id="choice2-${index}" value="1">
+                                <label class="btn btn-outline-primary" for="choice2-${index}">${question.choices[1]}</label>
+
+                                <input type="radio" class="btn-check" name="answer-${index}" id="choice3-${index}" value="2">
+                                <label class="btn btn-outline-primary" for="choice3-${index}">${question.choices[2]}</label>
+                            </div>
+                        `}
+                        
+                        <div class="timer mt-3" id="timer-${index}">11 ثانية</div>
+                        <button class="btn btn-primary mt-2" onclick="submitAnswer(${index})">إرسال الإجابة</button>
+                    </div>
+                `;
+                questionsContainer.appendChild(questionCard);
+
+                // Start timer for each question
+                startQuestionTimer(index);
+            });
+        }
+
+        // Question Timer
+        function startQuestionTimer(questionIndex) {
+            const timerElement = document.getElementById(`timer-${questionIndex}`);
+            let timeLeft = 11;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `${timeLeft} ثانية`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timerElement.textContent = 'انتهى الوقت';
+                    disableQuestionAnswers(questionIndex);
+                }
+            }, 1000);
+        }
+
+        // Submit Answer
+        function submitAnswer(questionIndex) {
+            const question = state.currentCompetition.questions[questionIndex];
+            const selectedAnswer = document.querySelector(`input[name="answer-${questionIndex}"]:checked`);
+
+            if (!selectedAnswer) {
+                alert('يرجى اختيار إجابة');
+                return;
+            }
+
+            // Prevent multiple submissions
+            if (state.currentParticipant.responses[questionIndex]) {
+                alert('لقد قمت بالإجابة على هذا السؤال مسبقًا');
+                return;
+            }
+
+            const answerValue = selectedAnswer.value;
+            let isCorrect = false;
+
+            // Check answer based on question type
+            if (question.type === 'trueOrFalse') {
+                isCorrect = answerValue === question.answer.toString();
+            } else {
+                isCorrect = parseInt(answerValue) === question.correctChoice;
+            }
+
+            // Record response
+            state.currentParticipant.responses[questionIndex] = {
+                questionId: questionIndex,
+                answer: answerValue,
+                isCorrect: isCorrect,
+                timestamp: getCurrentDateTime()
+            };
+
+            // Update points
+            if (isCorrect) {
+                state.currentParticipant.totalPoints += question.points;
+            }
+
+            // Disable further answers for this question
+            disableQuestionAnswers(questionIndex);
+
+            // Update responses storage
+            if (!state.responses[state.currentCompetition.title]) {
+                state.responses[state.currentCompetition.title] = [];
+            }
+            state.responses[state.currentCompetition.title].push({
+                participantName: state.currentParticipant.name,
+                participantMobile: state.currentParticipant.mobile,
+                questionIndex: questionIndex,
+                answer: answerValue,
+                isCorrect: isCorrect
+            });
+
+            // Render leaderboard
+            renderLeaderboard();
+
+            alert(isCorrect ? 'إجابة صحيحة!' : 'إجابة خاطئة');
+        }
+
+        // Disable Question Answers
+        function disableQuestionAnswers(questionIndex) {
+            const answers = document.querySelectorAll(`input[name="answer-${questionIndex}"]`);
+            answers.forEach(answer => {
+                answer.disabled = true;
+            });
+        }
+
+        // Show Responses
+        function showResponses(competitionTitle) {
+            const responsesContainer = document.getElementById('responsesContainer');
+            responsesContainer.innerHTML = '';
+
+            const competitionResponses = state.responses[competitionTitle] || [];
+            
+            if (competitionResponses.length === 0) {
+                responsesContainer.innerHTML = '<p>لا توجد استجابات حتى الآن</p>';
+            } else {
+                const table = document.createElement('table');
+                table.className = 'table table-striped';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>اسم المشارك</th>
+                            <th>رقم الجوال</th>
+                            <th>رقم السؤال</th>
+                            <th>الإجابة</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${competitionResponses.map(response => `
+                            <tr>
+                                <td>${response.participantName}</td>
+                                <td>${response.participantMobile}</td>
+                                <td>${response.questionIndex + 1}</td>
+                                <td>${response.answer}</td>
+                                <td>${response.isCorrect ? 'صحيحة' : 'خاطئة'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                responsesContainer.appendChild(table);
+            }
+
+            new bootstrap.Modal(document.getElementById('responsesModal')).show();
+        }
+
+        // Function to open admin login modal
+        function openAdminLoginModal() {
+            // Ensure the modal is created with Bootstrap's modal method
+            const adminLoginModal = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+            adminLoginModal.show();
+        }
+
+        // Diagnostic function to check admin dashboard
+        function checkAdminDashboard() {
+            console.log('Checking Admin Dashboard:');
+            console.log('Admin Dashboard Element:', document.getElementById('adminDashboard'));
+            console.log('Current State:', state);
+        }
+
+        // Admin Login Function with Enhanced Debugging
+        function adminLogin() {
+            console.log('Admin Login Attempt Started');
+            
+            const passwordInput = document.getElementById('adminPassword');
+            const password = passwordInput ? passwordInput.value : null;
+            
+            console.log('Entered Password:', password);
+            console.log('Expected Password:', state.adminPassword);
+
+            // Find the admin dashboard
+            const adminDashboard = document.getElementById('adminDashboard');
+            
+            console.log('Admin Dashboard Element:', adminDashboard);
+
+            // Validate password
+            if (password === state.adminPassword) {
+                console.log('Password Correct - Attempting to Show Dashboard');
+
+                // Hide the login modal
+                const modalElement = document.getElementById('adminLoginModal');
+                if (modalElement) {
+                    const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                    modalInstance.hide();
+                }
+
+                // Ensure admin dashboard is visible
+                if (adminDashboard) {
+                    adminDashboard.style.display = 'block';
+                    adminDashboard.classList.remove('d-none');
+                    
+                    console.log('Dashboard Display Style:', adminDashboard.style.display);
+                    console.log('Dashboard Classes:', adminDashboard.className);
+                } else {
+                    console.error('Admin Dashboard Element Not Found');
+                    alert('لم يتم العثور على لوحة التحكم');
+                }
+            } else {
+                console.log('Incorrect Password');
+                alert('كلمة المرور غير صحيحة');
+            }
+
+            // Additional diagnostic call
+            checkAdminDashboard();
+        }
+
+        // Ensure admin dashboard is hidden by default
+        document.addEventListener('DOMContentLoaded', () => {
+            const adminDashboard = document.getElementById('adminDashboard');
+            if (adminDashboard) {
+                adminDashboard.style.display = 'none';
+                adminDashboard.classList.add('d-none');
+                console.log('Admin Dashboard Initialized as Hidden');
+            } else {
+                console.error('Admin Dashboard Element Not Found on Page Load');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add some initial competitions
+            state.competitions.push({
+                title: 'مسابقة التحدي الأول',
+                startDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Started yesterday
+                endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Ends in a week
+                questions: [
+                    { 
+                        type: 'trueOrFalse', 
+                        text: 'القاهرة هي عاصمة مصر', 
+                        answer: true, 
+                        points: 2 
+                    },
+                    { 
+                        type: 'multipleChoice', 
+                        text: 'كم عدد الكواكب في المجموعة الشمسية؟', 
+                        choices: ['7', '8', '9'], 
+                        correctChoice: 1, 
+                        points: 3 
+                    }
+                ]
+            });
+            renderCompetitions();
+        });
+
+        // Question Type Selection
+        document.querySelectorAll('input[name="questionType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('trueOrFalseSection').style.display = 'none';
+                document.getElementById('multipleChoiceSection').style.display = 'none';
+
+                if (this.value === 'trueOrFalse') {
+                    document.getElementById('trueOrFalseSection').style.display = 'block';
+                } else if (this.value === 'multipleChoice') {
+                    document.getElementById('multipleChoiceSection').style.display = 'block';
+                }
+            });
+        });
+
+        // Add Question Function
+        function addQuestion() {
+            const questionType = document.querySelector('input[name="questionType"]:checked');
+            const questionText = document.getElementById('questionText').value;
+            const points = document.getElementById('questionPoints').value;
+
+            if (!questionType || !questionText) {
+                alert('يرجى اختيار نوع السؤال وإدخال نص السؤال');
+                return;
+            }
+
+            let questionDetails = {
+                type: questionType.value,
+                text: questionText,
+                points: parseInt(points)
+            };
+
+            if (questionType.value === 'trueOrFalse') {
+                const trueOrFalseAnswer = document.querySelector('input[name="trueOrFalseAnswer"]:checked');
+                if (!trueOrFalseAnswer) {
+                    alert('يرجى اختيار الإجابة الصحيحة');
+                    return;
+                }
+                questionDetails.answer = trueOrFalseAnswer.value === 'true';
+            } else if (questionType.value === 'multipleChoice') {
+                const choices = [
+                    document.getElementById('choice1').value,
+                    document.getElementById('choice2').value,
+                    document.getElementById('choice3').value
+                ];
+                const correctChoice = document.getElementById('correctChoice').value;
+
+                if (!choices[0] || !choices[1] || !choices[2]) {
+                    alert('يرجى إدخال جميع الخيارات');
+                    return;
+                }
+
+                questionDetails.choices = choices;
+                questionDetails.correctChoice = parseInt(correctChoice) - 1;
+            }
+
+            // Use the existing state.currentQuestions
+            if (!state.currentQuestions) {
+                state.currentQuestions = [];
+            }
+            state.currentQuestions.push(questionDetails);
+            renderQuestionsList();
+            clearQuestionForm();
+        }
+
+        // Render Questions List
+        function renderQuestionsList() {
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = '';
+
+            state.currentQuestions.forEach((q, index) => {
+                const questionPreview = document.createElement('div');
+                questionPreview.className = 'question-preview';
+                
+                let previewContent = `
+                    <div class="d-flex justify-content-between">
+                        <strong>السؤال ${index + 1}: ${q.text}</strong>
+                        <span class="badge bg-primary">النقاط: ${q.points}</span>
+                    </div>
+                    <small class="text-muted">نوع السؤال: ${q.type === 'trueOrFalse' ? 'صح أو خطأ' : 'اختيار من متعدد'}</small>
+                `;
+
+                if (q.type === 'trueOrFalse') {
+                    previewContent += `<p>الإجابة الصحيحة: ${q.answer ? 'صح' : 'خطأ'}</p>`;
+                } else {
+                    previewContent += `
+                        <p>الخيارات: 
+                            1. ${q.choices[0]}
+                            2. ${q.choices[1]}
+                            3. ${q.choices[2]}
+                        </p>
+                        <p>الإجابة الصحيحة: ${q.choices[q.correctChoice]}</p>
+                    `;
+                }
+
+                questionPreview.innerHTML = previewContent;
+                questionsList.appendChild(questionPreview);
+            });
+        }
+
+        // Clear Question Form
+        function clearQuestionForm() {
+            document.getElementById('questionText').value = '';
+            document.getElementById('questionPoints').value = '1';
+            document.querySelectorAll('input[name="questionType"]').forEach(radio => radio.checked = false);
+            document.getElementById('trueOrFalseSection').style.display = 'none';
+            document.getElementById('multipleChoiceSection').style.display = 'none';
+            document.getElementById('choice1').value = '';
+            document.getElementById('choice2').value = '';
+            document.getElementById('choice3').value = '';
+            document.getElementById('correctChoice').selectedIndex = 0;
+        }
+
+        // Save Competition
+        function saveCompetition() {
+            const competitionTitle = document.getElementById('competitionTitle').value;
+            const startDateTime = document.getElementById('startDateTime').value;
+            const endDateTime = document.getElementById('endDateTime').value;
+
+            if (!competitionTitle || !startDateTime || !endDateTime || !state.currentQuestions || state.currentQuestions.length === 0) {
+                alert('يرجى إدخال جميع التفاصيل وإضافة أسئلة');
+                return;
+            }
+
+            const newCompetition = {
+                title: competitionTitle,
+                startDate: new Date(startDateTime),
+                endDate: new Date(endDateTime),
+                questions: state.currentQuestions
+            };
+
+            state.competitions.push(newCompetition);
+            renderCompetitions();
+            
+            // Reset form and hide admin dashboard
+            document.getElementById('adminDashboard').style.display = 'none';
+            state.currentQuestions = [];
+            alert('تم حفظ المسابقة بنجاح');
+        }
+    </script>
+</body>
+</html>

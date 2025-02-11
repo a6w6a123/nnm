@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة المسابقات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Cairo', sans-serif;
+        }
+        .page { 
+            display: none; 
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .page.active { 
+            display: block; 
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .card-custom { 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            border-radius: 10px;
+        }
+        .nav-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- الصفحات -->
+            <div class="col-12">
+                <!-- الصفحة الرئيسية -->
+                <div id="homePage" class="page active">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <h1 class="display-4 mb-4 text-center mt-3">منصة المسابقات</h1>
+                                
+                                <!-- البحث والفلترة -->
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" id="searchCompetitions" class="form-control" placeholder="البحث عن مسابقات...">
+                                            <select id="filterCompetitions" class="form-select" style="max-width: 150px;">
+                                                <option value="">كل المسابقات</option>
+                                                <option value="active">المسابقات النشطة</option>
+                                                <option value="inactive">المسابقات الغير نشطة</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- قائمة المسابقات -->
+                                <div id="competitionsContainer" class="row">
+                                    <!-- سيتم إضافة المسابقات هنا تلقائيًا -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة تسجيل المشارك -->
+                <div id="participantPage" class="page">
+                    <div class="container">
+                        <div class="card card-custom">
+                            <div class="card-body">
+                                <h2 class="card-title mb-4">تسجيل المشارك</h2>
+                                <form id="participantForm">
+                                    <div class="mb-3">
+                                        <label for="participantName" class="form-label">الاسم الكامل</label>
+                                        <input type="text" class="form-control" id="participantName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="participantMobile" class="form-label">رقم الجوال</label>
+                                        <input type="tel" class="form-control" id="participantMobile" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="participantEmail" class="form-label">البريد الإلكتروني (اختياري)</label>
+                                        <input type="email" class="form-control" id="participantEmail">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">تسجيل المشارك</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة المسابقة -->
+                <div id="competitionPage" class="page container mt-4" style="display:none;">
+                    <div class="row">
+                        <div class="col-md-8 offset-md-2">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 id="currentCompetitionTitle" class="text-center"></h2>
+                                </div>
+                                <div class="card-body">
+                                    <div id="competitionQuestions">
+                                        <!-- سيتم عرض الأسئلة هنا ديناميكيًا -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة لوحة المتصدرين -->
+                <div id="leaderboardPage" class="page">
+                    <div class="container">
+                        <div class="card card-custom">
+                            <div class="card-body">
+                                <h2 class="card-title mb-4">لوحة المتصدرين</h2>
+                                <div id="leaderboardContainer">
+                                    <!-- سيتم إضافة المتصدرين هنا -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة الإدارة -->
+                <div id="adminPage" class="page">
+                    <div class="container">
+                        <div class="card card-custom">
+                            <div class="card-body">
+                                <div id="adminLogin">
+                                    <h2 class="card-title mb-4">لوحة التحكم الإدارية</h2>
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <label for="adminPassword" class="form-label">كلمة المرور</label>
+                                            <input type="password" class="form-control" id="adminPassword" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">تسجيل الدخول</button>
+                                    </form>
+                                </div>
+
+                                <div id="dashboardContent" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h3>إنشاء مسابقة جديدة</h3>
+                                            <form id="competitionForm">
+                                                <div class="mb-3">
+                                                    <label for="competitionTitle" class="form-label">عنوان المسابقة</label>
+                                                    <input type="text" class="form-control" id="competitionTitle" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="startDateTime" class="form-label">تاريخ البدء</label>
+                                                    <input type="datetime-local" class="form-control" id="startDateTime" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="endDateTime" class="form-label">تاريخ الانتهاء</label>
+                                                    <input type="datetime-local" class="form-control" id="endDateTime" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="competitionStatus" class="form-label">الحالة</label>
+                                                    <select class="form-select" id="competitionStatus">
+                                                        <option value="active">نشطة</option>
+                                                        <option value="inactive">غير نشطة</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <!-- قسم إضافة الأسئلة -->
+                                                <div class="mb-3">
+                                                    <label class="form-label">الأسئلة</label>
+                                                    <div id="questionsContainer">
+                                                        <!-- سيتم إضافة الأسئلة هنا ديناميكيًا -->
+                                                    </div>
+                                                    <select id="questionType" class="form-select">
+                                                        <option value="truefalse">صح/خطأ</option>
+                                                        <option value="multichoice">اختيار من متعدد</option>
+                                                    </select>
+                                                    <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2">
+                                                        إضافة سؤال جديد
+                                                    </button>
+                                                </div>
+                                                
+                                                <button type="submit" class="btn btn-primary w-100">إنشاء المسابقة</button>
+                                            </form>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h3>المسابقات الحالية</h3>
+                                            <div id="adminCompetitionsContainer" class="list-group">
+                                                <!-- سيتم إضافة المسابقات هنا تلقائيًا -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التنقل -->
+        <div class="nav-buttons text-center py-2 fixed-bottom">
+            <div class="btn-group" role="group" id="navigationButtons">
+                <button onclick="navigateTo('home')" class="btn btn-outline-primary navigation-btn" data-page="home">
+                    <i class="bi bi-house"></i> الرئيسية
+                </button>
+                <button onclick="navigateTo('admin')" class="btn btn-outline-secondary navigation-btn" data-page="admin">
+                    <i class="bi bi-gear"></i> لوحة التحكم
+                </button>
+                <button onclick="navigateTo('leaderboard')" class="btn btn-outline-success navigation-btn" data-page="leaderboard">
+                    <i class="bi bi-trophy"></i> المتصدرين
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS و أيقونات Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript المخصص -->
+    <script>
+    // State Management
+    const state = {
+        siteTitle: 'منصة المسابقات',
+        adminPassword: '12345',
+        currentPage: 'home',
+        currentCompetition: null,
+        currentParticipant: null,
+        competitions: [],
+        questions: []
+    };
+
+    // Enhanced Navigation Function
+    function navigateTo(page) {
+        console.log('Navigation Attempt:', page);
+        
+        // Validate page
+        const validPages = ['home', 'participant', 'competition', 'leaderboard', 'admin'];
+        if (!validPages.includes(page)) {
+            console.error('Invalid page, defaulting to home');
+            page = 'home';
+        }
+
+        // Debugging: Log all page elements
+        const allPages = document.querySelectorAll('.page');
+        console.log('Total Pages:', allPages.length);
+        allPages.forEach(pageEl => {
+            console.log('Page ID:', pageEl.id, 'Classes:', pageEl.classList.toString());
+        });
+
+        // Hide all pages
+        allPages.forEach(pageEl => {
+            pageEl.classList.remove('active');
+        });
+
+        // Show target page
+        const targetPage = document.getElementById(`${page}Page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+            console.log('Showing Page:', targetPage.id);
+        } else {
+            console.error('Page not found:', `${page}Page`);
+        }
+
+        // Page-specific actions
+        switch(page) {
+            case 'admin':
+                initAdminPage();
+                break;
+            case 'leaderboard':
+                loadLeaderboard();
+                break;
+            case 'home':
+                loadCompetitions();
+                break;
+        }
+
+        // Update current page state
+        state.currentPage = page;
+    }
+
+    // Admin Page Initialization
+    function initAdminPage() {
+        console.log('Initializing Admin Page');
+        
+        const adminLogin = document.getElementById('adminLogin');
+        const dashboardContent = document.getElementById('dashboardContent');
+        const loginForm = document.getElementById('loginForm');
+        
+        if (!adminLogin || !dashboardContent || !loginForm) {
+            console.error('Missing admin page elements');
+            return;
+        }
+        
+        // Reset page state
+        adminLogin.style.display = 'block';
+        dashboardContent.style.display = 'none';
+        
+        // Login form submission
+        loginForm.onsubmit = function(event) {
+            event.preventDefault();
+            
+            const passwordInput = document.getElementById('adminPassword');
+            const enteredPassword = passwordInput ? passwordInput.value : '';
+            
+            console.log('Login Attempt:', enteredPassword);
+            
+            if (enteredPassword === state.adminPassword) {
+                console.log('Admin Login Successful');
+                adminLogin.style.display = 'none';
+                dashboardContent.style.display = 'block';
+                loadAdminCompetitions();
+            } else {
+                console.error('Admin Login Failed');
+                alert('كلمة المرور غير صحيحة');
+            }
+        };
+    }
+
+    // Load Admin Competitions
+    function loadAdminCompetitions() {
+        console.log('Loading Admin Competitions');
+        
+        const adminCompetitionsList = document.getElementById('adminCompetitionsContainer');
+        if (!adminCompetitionsList) {
+            console.error('Admin Competitions List Not Found');
+            return;
+        }
+        
+        // Clear existing list
+        adminCompetitionsList.innerHTML = '';
+        
+        // Simulate competitions (replace with actual database logic)
+        const competitions = [
+            { 
+                title: 'مسابقة البرمجة الأولى', 
+                status: 'active', 
+                startDate: new Date(), 
+                endDate: new Date(Date.now() + 7*24*60*60*1000) 
+            }
+        ];
+        
+        competitions.forEach(competition => {
+            const competitionItem = document.createElement('div');
+            competitionItem.classList.add('list-group-item');
+            competitionItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">${competition.title}</h5>
+                    <span class="badge ${competition.status === 'active' ? 'bg-success' : 'bg-warning'}">
+                        ${competition.status === 'active' ? 'نشطة' : 'غير نشطة'}
+                    </span>
+                </div>
+                <small>
+                    من ${competition.startDate.toLocaleDateString()} 
+                    إلى ${competition.endDate.toLocaleDateString()}
+                </small>
+            `;
+            adminCompetitionsList.appendChild(competitionItem);
+        });
+    }
+
+    // Load Leaderboard
+    function loadLeaderboard() {
+        console.log('Loading Leaderboard');
+        
+        const leaderboardContainer = document.getElementById('leaderboardContainer');
+        if (!leaderboardContainer) {
+            console.error('Leaderboard Container Not Found');
+            return;
+        }
+        
+        // Simulate leaderboard data (replace with actual database logic)
+        const leaderboardData = [
+            { name: 'أحمد', score: 95 },
+            { name: 'محمد', score: 88 },
+            { name: 'علي', score: 82 }
+        ];
+        
+        leaderboardContainer.innerHTML = leaderboardData.map((participant, index) => `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${index + 1}. ${participant.name}</span>
+                <span class="badge bg-primary">${participant.score}</span>
+            </div>
+        `).join('');
+    }
+
+    // Load Competitions
+    function loadCompetitions() {
+        const competitionsContainer = document.getElementById('competitionsContainer');
+        
+        // مسح المحتوى السابق
+        competitionsContainer.innerHTML = `
+            <div class="text-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">جارٍ التحميل...</span>
+                </div>
+            </div>
+        `;
+
+        // جلب المسابقات بسرعة
+        competitionDB.getCompetitions()
+            .then(competitions => {
+                // فلترة المسابقات النشطة والقادمة
+                const activeCompetitions = competitions.filter(comp => 
+                    comp.status === 'active' || comp.status === 'upcoming'
+                );
+
+                // فحص وجود مسابقات
+                if (activeCompetitions.length === 0) {
+                    competitionsContainer.innerHTML = `
+                        <div class="alert alert-info text-center" role="alert">
+                            لا توجد مسابقات متاحة حاليًا
+                        </div>
+                    `;
+                    return;
+                }
+
+                // بناء HTML للمسابقات
+                const competitionsHTML = activeCompetitions.map(competition => `
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 ${competition.status === 'active' ? 'border-success' : 'border-warning'}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">${competition.title}</h5>
+                                <span class="badge ${competition.status === 'active' ? 'bg-success' : 'bg-warning'}">
+                                    ${competition.status === 'active' ? 'جارٍ' : 'قادم'}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <strong>بداية المسابقة:</strong> ${new Date(competition.startDate).toLocaleString()}<br>
+                                    <strong>نهاية المسابقة:</strong> ${new Date(competition.endDate).toLocaleString()}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <button onclick="startCompetition(${competition.id})" 
+                                    class="btn btn-${competition.status === 'active' ? 'primary' : 'secondary'} w-100"
+                                    ${competition.status !== 'active' ? 'disabled' : ''}>
+                                    ${competition.status === 'active' ? 'ابدأ المسابقة' : 'المسابقة لم تبدأ بعد'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // عرض المسابقات
+                competitionsContainer.innerHTML = `
+                    <div class="row">
+                        ${competitionsHTML}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('خطأ في جلب المسابقات:', error);
+                competitionsContainer.innerHTML = `
+                    <div class="alert alert-danger text-center" role="alert">
+                        حدث خطأ في تحميل المسابقات. يرجى المحاولة مرة أخرى
+                    </div>
+                `;
+            });
+    }
+
+    // إضافة دالة لإنشاء أسئلة جديدة
+    function addQuestionToCompetition() {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const questionTypeSelect = document.getElementById('questionType');
+        const questionType = questionTypeSelect.value;
+
+        // إنشاء عنصر السؤال
+        const questionDiv = document.createElement('div');
+        questionDiv.classList.add('question-item', 'card', 'mb-3');
+        
+        // محتوى السؤال بناءً على النوع
+        if (questionType === 'truefalse') {
+            questionDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">نص السؤال (صح/خطأ)</label>
+                        <input type="text" class="form-control question-text" placeholder="أدخل نص السؤال" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <select class="form-select question-answer">
+                            <option value="true">صح</option>
+                            <option value="false">خطأ</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question">حذف السؤال</button>
+                </div>
+            `;
+        } else if (questionType === 'multichoice') {
+            questionDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">نص السؤال (اختيار من متعدد)</label>
+                        <input type="text" class="form-control question-text" placeholder="أدخل نص السؤال" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الأول</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الأول" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الثاني</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الثاني" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الثالث</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الثالث" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <select class="form-select question-answer">
+                            <option value="0">الخيار الأول</option>
+                            <option value="1">الخيار الثاني</option>
+                            <option value="2">الخيار الثالث</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question">حذف السؤال</button>
+                </div>
+            `;
+        }
+
+        // إضافة زر الحذف
+        const removeButton = questionDiv.querySelector('.remove-question');
+        removeButton.addEventListener('click', () => {
+            questionsContainer.removeChild(questionDiv);
+        });
+
+        // إضافة السؤال للحاوية
+        questionsContainer.appendChild(questionDiv);
+    }
+
+    // إضافة دالة التحقق الشامل من صحة المسابقة
+    function validateCompetitionForm() {
+        // التحقق من عنوان المسابقة
+        const competitionTitle = document.getElementById('competitionTitle');
+        if (!competitionTitle || !competitionTitle.value.trim()) {
+            alert('يرجى إدخال عنوان للمسابقة');
+            competitionTitle.focus();
+            return false;
+        }
+
+        // التحقق من تاريخ البدء
+        const startDateTime = document.getElementById('startDateTime');
+        if (!startDateTime || !startDateTime.value) {
+            alert('يرجى تحديد تاريخ بدء المسابقة');
+            startDateTime.focus();
+            return false;
+        }
+
+        // التحقق من تاريخ الانتهاء
+        const endDateTime = document.getElementById('endDateTime');
+        if (!endDateTime || !endDateTime.value) {
+            alert('يرجى تحديد تاريخ انتهاء المسابقة');
+            endDateTime.focus();
+            return false;
+        }
+
+        // التحقق من أن تاريخ الانتهاء بعد تاريخ البدء
+        const startDate = new Date(startDateTime.value);
+        const endDate = new Date(endDateTime.value);
+        if (endDate <= startDate) {
+            alert('يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء');
+            endDateTime.focus();
+            return false;
+        }
+
+        // التحقق من حالة المسابقة
+        const competitionStatus = document.getElementById('competitionStatus');
+        if (!competitionStatus || !competitionStatus.value) {
+            alert('يرجى تحديد حالة المسابقة');
+            competitionStatus.focus();
+            return false;
+        }
+
+        // التحقق من وجود أسئلة
+        const questionItems = document.querySelectorAll('.question-item');
+        if (questionItems.length === 0) {
+            alert('يجب إضافة أسئلة للمسابقة');
+            document.getElementById('addQuestionBtn').focus();
+            return false;
+        }
+
+        // التحقق من صحة كل سؤال
+        for (let questionItem of questionItems) {
+            const questionText = questionItem.querySelector('.question-text');
+            if (!questionText || !questionText.value.trim()) {
+                alert('يجب إدخال نص لكل سؤال');
+                questionText.focus();
+                return false;
+            }
+
+            // التحقق من الإجابات
+            const questionType = questionItem.querySelector('.question-answer').closest('.card-body').querySelector('label').textContent.includes('صح/خطأ') ? 'truefalse' : 'multichoice';
+            
+            if (questionType === 'multichoice') {
+                const choices = questionItem.querySelectorAll('.choice');
+                for (let choice of choices) {
+                    if (!choice.value.trim()) {
+                        alert('يجب إدخال نص لكل خيار');
+                        choice.focus();
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // تعديل دالة حفظ المسابقة
+    function saveCompetition(event) {
+        event.preventDefault();
+        
+        // التحقق الشامل من صحة النموذج
+        if (!validateCompetitionForm()) {
+            return;
+        }
+        
+        // جمع بيانات المسابقة
+        const competitionTitle = document.getElementById('competitionTitle').value;
+        const startDateTime = document.getElementById('startDateTime').value;
+        const endDateTime = document.getElementById('endDateTime').value;
+        const competitionStatus = document.getElementById('competitionStatus').value;
+        
+        // جمع الأسئلة
+        const questions = [];
+        const questionItems = document.querySelectorAll('.question-item');
+        
+        questionItems.forEach(questionItem => {
+            const questionText = questionItem.querySelector('.question-text').value;
+            const questionType = questionItem.querySelector('.question-answer').closest('.card-body').querySelector('label').textContent.includes('صح/خطأ') ? 'truefalse' : 'multichoice';
+            
+            const questionData = {
+                text: questionText,
+                type: questionType
+            };
+            
+            if (questionType === 'truefalse') {
+                questionData.answer = questionItem.querySelector('.question-answer').value === 'true';
+            } else {
+                // اختيار من متعدد
+                const choices = Array.from(questionItem.querySelectorAll('.choice')).map(input => input.value);
+                questionData.choices = choices;
+                questionData.answer = parseInt(questionItem.querySelector('.question-answer').value);
+            }
+            
+            questions.push(questionData);
+        });
+        
+        // إنشاء كائن المسابقة
+        const competition = {
+            title: competitionTitle,
+            startDate: startDateTime,
+            endDate: endDateTime,
+            status: competitionStatus,
+            questions: questions
+        };
+        
+        // حفظ المسابقة في قاعدة البيانات
+        competitionDB.addCompetition(competition)
+            .then((savedCompetition) => {
+                console.log('تم حفظ المسابقة بنجاح', savedCompetition);
+                alert('تم حفظ المسابقة بنجاح');
+                
+                // إعادة تحميل المسابقات
+                loadCompetitions();
+                
+                // مسح نموذج المسابقة
+                document.getElementById('competitionForm').reset();
+                document.getElementById('questionsContainer').innerHTML = '';
+            })
+            .catch(error => {
+                console.error('خطأ في حفظ المسابقة:', error);
+                alert('حدث خطأ أثناء حفظ المسابقة: ' + error.message);
+            });
+    }
+
+    // تعديل دالة إضافة السؤال
+    function addQuestionToCompetition() {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const questionTypeSelect = document.getElementById('questionType');
+        const questionType = questionTypeSelect.value;
+
+        // إنشاء عنصر السؤال
+        const questionDiv = document.createElement('div');
+        questionDiv.classList.add('question-item', 'card', 'mb-3');
+        
+        // محتوى السؤال بناءً على النوع
+        if (questionType === 'truefalse') {
+            questionDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">نص السؤال (صح/خطأ)</label>
+                        <input type="text" class="form-control question-text" placeholder="أدخل نص السؤال" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <select class="form-select question-answer">
+                            <option value="true">صح</option>
+                            <option value="false">خطأ</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question">حذف السؤال</button>
+                </div>
+            `;
+        } else if (questionType === 'multichoice') {
+            questionDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">نص السؤال (اختيار من متعدد)</label>
+                        <input type="text" class="form-control question-text" placeholder="أدخل نص السؤال" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الأول</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الأول" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الثاني</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الثاني" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الخيار الثالث</label>
+                        <input type="text" class="form-control choice" placeholder="أدخل الخيار الثالث" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <select class="form-select question-answer">
+                            <option value="0">الخيار الأول</option>
+                            <option value="1">الخيار الثاني</option>
+                            <option value="2">الخيار الثالث</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question">حذف السؤال</button>
+                </div>
+            `;
+        }
+
+        // إضافة زر الحذف
+        const removeButton = questionDiv.querySelector('.remove-question');
+        removeButton.addEventListener('click', () => {
+            questionsContainer.removeChild(questionDiv);
+        });
+
+        // إضافة السؤال للحاوية
+        questionsContainer.appendChild(questionDiv);
+    }
+
+    // تعديل إضافة معالجات الأحداث
+    document.addEventListener('DOMContentLoaded', () => {
+        const addQuestionBtn = document.getElementById('addQuestionBtn');
+        const competitionForm = document.getElementById('competitionForm');
+        
+        if (addQuestionBtn) {
+            addQuestionBtn.addEventListener('click', addQuestionToCompetition);
+        }
+        
+        if (competitionForm) {
+            competitionForm.addEventListener('submit', saveCompetition);
+        }
+    });
+
+    // تعديل دالة إضافة المسابقة في قاعدة البيانات
+    class CompetitionDatabase {
+        constructor() {
+            this.dbName = 'CompetitionPlatform';
+            this.dbVersion = 6; // زيادة الإصدار لحل مشاكل التهيئة
+            this.db = null;
+        }
+
+        // دالة تهيئة قاعدة البيانات
+        initDatabase() {
+            return new Promise((resolve, reject) => {
+                console.log('بدء تهيئة قاعدة البيانات');
+                const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                request.onupgradeneeded = (event) => {
+                    console.log('تحديث مخططات قاعدة البيانات');
+                    const db = event.target.result;
+                    
+                    // إنشاء مخزن للمسابقات إذا لم يكن موجودًا
+                    if (!db.objectStoreNames.contains('competitions')) {
+                        const competitionsStore = db.createObjectStore('competitions', { 
+                            keyPath: 'id', 
+                            autoIncrement: true 
+                        });
+                        competitionsStore.createIndex('title', 'title', { unique: false });
+                        competitionsStore.createIndex('status', 'status', { unique: false });
+                        competitionsStore.createIndex('startDate', 'startDate', { unique: false });
+                        console.log('تم إنشاء مخزن المسابقات');
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    console.log('تم تهيئة قاعدة البيانات بنجاح');
+                    resolve(this.db);
+                };
+
+                request.onerror = (event) => {
+                    console.error('خطأ فادح في إنشاء قاعدة البيانات:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // دالة إضافة مسابقة
+        addCompetition(competition) {
+            return new Promise((resolve, reject) => {
+                // التحقق من صحة بيانات المسابقة
+                if (!this.validateCompetition(competition)) {
+                    reject(new Error('بيانات المسابقة غير صالحة'));
+                    return;
+                }
+
+                console.log('محاولة إضافة مسابقة جديدة:', competition);
+
+                // التأكد من تهيئة قاعدة البيانات
+                if (!this.db) {
+                    this.initDatabase()
+                        .then(() => this._addCompetition(competition))
+                        .then(resolve)
+                        .catch(reject);
+                } else {
+                    this._addCompetition(competition)
+                        .then(resolve)
+                        .catch(reject);
+                }
+            });
+        }
+
+        // دالة داخلية لإضافة المسابقة
+        _addCompetition(competition) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const transaction = this.db.transaction(['competitions'], 'readwrite');
+                    const store = transaction.objectStore('competitions');
+                    const request = store.add(competition);
+
+                    request.onsuccess = (event) => {
+                        console.log('تمت إضافة المسابقة بنجاح', event.target.result);
+                        
+                        // عرض تفاصيل المسابقة المضافة
+                        console.table({
+                            'عنوان المسابقة': competition.title,
+                            'تاريخ البدء': competition.startDate,
+                            'تاريخ الانتهاء': competition.endDate,
+                            'الحالة': competition.status,
+                            'عدد الأسئلة': competition.questions.length
+                        });
+
+                        resolve(event.target.result);
+                    };
+
+                    request.onerror = (event) => {
+                        console.error('خطأ في إضافة المسابقة:', event.target.error);
+                        reject(event.target.error);
+                    };
+
+                    // معالجة إغلاق المعاملة
+                    transaction.oncomplete = () => {
+                        console.log('اكتمال معاملة إضافة المسابقة');
+                    };
+
+                    transaction.onerror = (event) => {
+                        console.error('خطأ في معاملة قاعدة البيانات:', event.target.error);
+                        reject(event.target.error);
+                    };
+                } catch (error) {
+                    console.error('استثناء غير متوقع:', error);
+                    reject(error);
+                }
+            });
+        }
+
+        // دالة التحقق من صحة المسابقة
+        validateCompetition(competition) {
+            // التحقق من وجود العناصر الأساسية
+            if (!competition.title || competition.title.trim() === '') {
+                console.error('يجب إدخال عنوان للمسابقة');
+                return false;
+            }
+
+            if (!competition.startDate || !competition.endDate) {
+                console.error('يجب تحديد تواريخ البدء والانتهاء');
+                return false;
+            }
+
+            const startDate = new Date(competition.startDate);
+            const endDate = new Date(competition.endDate);
+            if (endDate <= startDate) {
+                console.error('يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء');
+                return false;
+            }
+
+            if (!competition.status) {
+                console.error('يجب تحديد حالة المسابقة');
+                return false;
+            }
+
+            if (!competition.questions || competition.questions.length === 0) {
+                console.error('يجب إضافة أسئلة للمسابقة');
+                return false;
+            }
+
+            // التحقق من صحة الأسئلة
+            for (let question of competition.questions) {
+                if (!question.text || question.text.trim() === '') {
+                    console.error('كل سؤال يجب أن يحتوي على نص');
+                    return false;
+                }
+
+                if (question.type === 'truefalse') {
+                    if (typeof question.answer !== 'boolean') {
+                        console.error('يجب تحديد إجابة صحيحة للسؤال (صح/خطأ)');
+                        return false;
+                    }
+                } else if (question.type === 'multichoice') {
+                    if (!question.choices || question.choices.length !== 3) {
+                        console.error('يجب إضافة 3 خيارات للسؤال متعدد الخيارات');
+                        return false;
+                    }
+
+                    // التحقق من عدم وجود خيارات فارغة
+                    if (question.choices.some(choice => !choice)) {
+                        console.error('يجب إدخال نص لكل خيار');
+                        return false;
+                    }
+
+                    if (typeof question.answer !== 'number' || 
+                        question.answer < 0 || 
+                        question.answer > 2) {
+                        console.error('يجب تحديد إجابة صحيحة للسؤال متعدد الخيارات');
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // دالة استرجاع المسابقات
+        getCompetitions() {
+            return new Promise((resolve, reject) => {
+                if (!this.db) {
+                    this.initDatabase()
+                        .then(() => this._getCompetitions())
+                        .then(resolve)
+                        .catch(reject);
+                } else {
+                    this._getCompetitions()
+                        .then(resolve)
+                        .catch(reject);
+                }
+            });
+        }
+
+        // دالة داخلية لاسترجاع المسابقات
+        _getCompetitions() {
+            return new Promise((resolve, reject) => {
+                try {
+                    const transaction = this.db.transaction(['competitions'], 'readonly');
+                    const store = transaction.objectStore('competitions');
+                    const request = store.getAll();
+
+                    request.onsuccess = () => {
+                        console.log('تم استرجاع المسابقات:', request.result.length);
+                        resolve(request.result);
+                    };
+
+                    request.onerror = (event) => {
+                        console.error('خطأ في جلب المسابقات:', event.target.error);
+                        reject(event.target.error);
+                    };
+                } catch (error) {
+                    console.error('استثناء في استرجاع المسابقات:', error);
+                    reject(error);
+                }
+            });
+        }
+
+        // دالة حذف مسابقة
+        deleteCompetition(id) {
+            return new Promise((resolve, reject) => {
+                if (!this.db) {
+                    this.initDatabase()
+                        .then(() => this._deleteCompetition(id))
+                        .then(resolve)
+                        .catch(reject);
+                } else {
+                    this._deleteCompetition(id)
+                        .then(resolve)
+                        .catch(reject);
+                }
+            });
+        }
+
+        // دالة داخلية لحذف المسابقة
+        _deleteCompetition(id) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const transaction = this.db.transaction(['competitions'], 'readwrite');
+                    const store = transaction.objectStore('competitions');
+                    const request = store.delete(id);
+
+                    request.onsuccess = () => {
+                        console.log('تم حذف المسابقة بنجاح');
+                        resolve();
+                    };
+
+                    request.onerror = (event) => {
+                        console.error('خطأ في حذف المسابقة:', event.target.error);
+                        reject(event.target.error);
+                    };
+                } catch (error) {
+                    console.error('استثناء في حذف المسابقة:', error);
+                    reject(error);
+                }
+            });
+        }
+
+        // دالة تعديل المسابقة
+        updateCompetition(competition) {
+            return new Promise((resolve, reject) => {
+                // التحقق من صحة بيانات المسابقة
+                if (!this.validateCompetition(competition)) {
+                    reject(new Error('بيانات المسابقة غير صالحة'));
+                    return;
+                }
+
+                console.log('محاولة تعديل المسابقة:', competition);
+
+                // التأكد من تهيئة قاعدة البيانات
+                if (!this.db) {
+                    this.initDatabase()
+                        .then(() => this._updateCompetition(competition))
+                        .then(resolve)
+                        .catch(reject);
+                } else {
+                    this._updateCompetition(competition)
+                        .then(resolve)
+                        .catch(reject);
+                }
+            });
+        }
+
+        // دالة داخلية لتعديل المسابقة
+        _updateCompetition(competition) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const transaction = this.db.transaction(['competitions'], 'readwrite');
+                    const store = transaction.objectStore('competitions');
+                    const request = store.put(competition);
+
+                    request.onsuccess = () => {
+                        console.log('تم تعديل المسابقة بنجاح');
+                        resolve();
+                    };
+
+                    request.onerror = (event) => {
+                        console.error('خطأ في تعديل المسابقة:', event.target.error);
+                        reject(event.target.error);
+                    };
+
+                    // معالجة إغلاق المعاملة
+                    transaction.oncomplete = () => {
+                        console.log('اكتمال معاملة تعديل المسابقة');
+                    };
+
+                    transaction.onerror = (event) => {
+                        console.error('خطأ في معاملة قاعدة البيانات:', event.target.error);
+                        reject(event.target.error);
+                    };
+                } catch (error) {
+                    console.error('استثناء غير متوقع:', error);
+                    reject(error);
+                }
+            });
+        }
+    }
+
+    // إنشاء مثيل قاعدة البيانات
+    const competitionDB = new CompetitionDatabase();
+    competitionDB.initDatabase()
+        .then(() => {
+            console.log('قاعدة البيانات جاهزة للاستخدام');
+            
+            // تحميل المسابقات عند تحميل الصفحة
+            document.addEventListener('DOMContentLoaded', () => {
+                loadCompetitions();
+                loadAdminCompetitions();
+            });
+        })
+        .catch(error => {
+            console.error('فشل في تهيئة قاعدة البيانات:', error);
+            alert('خطأ في إعداد قاعدة البيانات');
+        });
+
+    // دالة بدء المسابقة
+    function startCompetition(competitionId) {
+        competitionDB.getCompetitions()
+            .then(competitions => {
+                const competition = competitions.find(c => c.id === parseInt(competitionId));
+                if (competition) {
+                    // التحقق من حالة المسابقة
+                    if (competition.status !== 'active') {
+                        alert('هذه المسابقة غير نشطة حاليًا');
+                        return;
+                    }
+
+                    // التحقق من وقت المسابقة
+                    const now = new Date();
+                    const startDate = new Date(competition.startDate);
+                    const endDate = new Date(competition.endDate);
+
+                    if (now < startDate) {
+                        alert('لم يبدأ موعد هذه المسابقة بعد');
+                        return;
+                    }
+
+                    if (now > endDate) {
+                        alert('انتهى موعد هذه المسابقة');
+                        return;
+                    }
+
+                    // تخزين المسابقة الحالية في الذاكرة المؤقتة
+                    state.currentCompetition = competition;
+                    
+                    // الانتقال إلى صفحة المسابقة
+                    navigateTo('competition');
+                } else {
+                    alert('لم يتم العثور على المسابقة');
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في البحث عن المسابقة:', error);
+            });
+    }
+
+    // تحميل المسابقات في الصفحة الرئيسية
+    function loadCompetitions() {
+        const competitionsContainer = document.getElementById('competitionsContainer');
+        
+        // مسح المحتوى السابق
+        competitionsContainer.innerHTML = `
+            <div class="text-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">جارٍ التحميل...</span>
+                </div>
+            </div>
+        `;
+
+        // جلب المسابقات بسرعة
+        competitionDB.getCompetitions()
+            .then(competitions => {
+                // فلترة المسابقات النشطة والقادمة
+                const activeCompetitions = competitions.filter(comp => 
+                    comp.status === 'active' || comp.status === 'upcoming'
+                );
+
+                // فحص وجود مسابقات
+                if (activeCompetitions.length === 0) {
+                    competitionsContainer.innerHTML = `
+                        <div class="alert alert-info text-center" role="alert">
+                            لا توجد مسابقات متاحة حاليًا
+                        </div>
+                    `;
+                    return;
+                }
+
+                // بناء HTML للمسابقات
+                const competitionsHTML = activeCompetitions.map(competition => `
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 ${competition.status === 'active' ? 'border-success' : 'border-warning'}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">${competition.title}</h5>
+                                <span class="badge ${competition.status === 'active' ? 'bg-success' : 'bg-warning'}">
+                                    ${competition.status === 'active' ? 'جارٍ' : 'قادم'}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <strong>بداية المسابقة:</strong> ${new Date(competition.startDate).toLocaleString()}<br>
+                                    <strong>نهاية المسابقة:</strong> ${new Date(competition.endDate).toLocaleString()}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <button onclick="startCompetition(${competition.id})" 
+                                    class="btn btn-${competition.status === 'active' ? 'primary' : 'secondary'} w-100"
+                                    ${competition.status !== 'active' ? 'disabled' : ''}>
+                                    ${competition.status === 'active' ? 'ابدأ المسابقة' : 'المسابقة لم تبدأ بعد'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // عرض المسابقات
+                competitionsContainer.innerHTML = `
+                    <div class="row">
+                        ${competitionsHTML}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('خطأ في جلب المسابقات:', error);
+                competitionsContainer.innerHTML = `
+                    <div class="alert alert-danger text-center" role="alert">
+                        حدث خطأ في تحميل المسابقات. يرجى المحاولة مرة أخرى
+                    </div>
+                `;
+            });
+    }
+
+    // تحميل المسابقات في لوحة التحكم
+    function loadAdminCompetitions() {
+        competitionDB.getCompetitions()
+            .then(competitions => {
+                const adminCompetitionsContainer = document.getElementById('adminCompetitionsContainer');
+                if (adminCompetitionsContainer) {
+                    adminCompetitionsContainer.innerHTML = competitions.map(competition => `
+                        <div class="card mb-3 admin-competition-item" data-id="${competition.id}">
+                            <div class="card-body">
+                                <h5 class="card-title">${competition.title}</h5>
+                                <p class="card-text">
+                                    تاريخ البدء: ${competition.startDate}<br>
+                                    تاريخ الانتهاء: ${competition.endDate}<br>
+                                    الحالة: ${competition.status}<br>
+                                    عدد الأسئلة: ${competition.questions.length}
+                                </p>
+                                <div class="btn-group">
+                                    <button class="btn btn-warning edit-competition" data-id="${competition.id}">
+                                        تعديل
+                                    </button>
+                                    <button class="btn btn-danger delete-competition" data-id="${competition.id}">
+                                        حذف
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // إضافة معالجات الأحداث للأزرار
+                    document.querySelectorAll('.delete-competition').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const competitionId = parseInt(e.target.getAttribute('data-id'));
+                            if (confirm('هل أنت متأكد من حذف هذه المسابقة؟')) {
+                                competitionDB.deleteCompetition(competitionId)
+                                    .then(() => {
+                                        loadCompetitions(); // إعادة تحميل المسابقات
+                                        loadAdminCompetitions();
+                                        alert('تم حذف المسابقة بنجاح');
+                                    })
+                                    .catch(error => {
+                                        console.error('خطأ في حذف المسابقة:', error);
+                                        alert('حدث خطأ أثناء حذف المسابقة');
+                                    });
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('.edit-competition').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const competitionId = parseInt(e.target.getAttribute('data-id'));
+                            editCompetition(competitionId);
+                        });
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في تحميل المسابقات في لوحة التحكم:', error);
+            });
+    }
+
+    // دالة تعديل المسابقة
+    function editCompetition(competitionId) {
+        // جلب تفاصيل المسابقة
+        competitionDB.getCompetitions()
+            .then(competitions => {
+                const competition = competitions.find(c => c.id === competitionId);
+                if (competition) {
+                    // التبديل إلى نموذج إنشاء/تعديل المسابقة
+                    document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+                    document.getElementById('adminPage').style.display = 'block';
+
+                    // ملء النموذج بتفاصيل المسابقة
+                    document.getElementById('competitionTitle').value = competition.title;
+                    document.getElementById('startDateTime').value = competition.startDate;
+                    document.getElementById('endDateTime').value = competition.endDate;
+                    document.getElementById('competitionStatus').value = competition.status;
+
+                    // مسح الأسئلة الحالية
+                    const questionsContainer = document.getElementById('questionsContainer');
+                    questionsContainer.innerHTML = '';
+
+                    // إضافة الأسئلة
+                    competition.questions.forEach((question, index) => {
+                        // إنشاء حاوية السؤال
+                        const questionContainer = document.createElement('div');
+                        questionContainer.classList.add('question-container', 'card', 'mb-3');
+                        
+                        // اختيار نوع السؤال
+                        questionContainer.innerHTML = `
+                            <div class="card-header">
+                                <select class="question-type form-control" onchange="toggleQuestionType(this)">
+                                    <option value="truefalse" ${question.type === 'truefalse' ? 'selected' : ''}>صح/خطأ</option>
+                                    <option value="multichoice" ${question.type === 'multichoice' ? 'selected' : ''}>اختيار من متعدد</option>
+                                </select>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label>نص السؤال</label>
+                                    <input type="text" class="form-control question-text" value="${question.text}" required>
+                                </div>
+                                
+                                <!-- قسم صح/خطأ -->
+                                <div class="truefalse-section" style="display: ${question.type === 'truefalse' ? 'block' : 'none'};">
+                                    <div class="form-group">
+                                        <label>الإجابة</label>
+                                        <select class="form-control truefalse-answer">
+                                            <option value="true" ${question.answer === true ? 'selected' : ''}>صح</option>
+                                            <option value="false" ${question.answer === false ? 'selected' : ''}>خطأ</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- قسم اختيار من متعدد -->
+                                <div class="multichoice-section" style="display: ${question.type === 'multichoice' ? 'block' : 'none'};">
+                                    <div class="form-group">
+                                        <label>الخيار الأول</label>
+                                        <input type="text" class="form-control choice1" value="${question.choices[0] || ''}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>الخيار الثاني</label>
+                                        <input type="text" class="form-control choice2" value="${question.choices[1] || ''}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>الخيار الثالث</label>
+                                        <input type="text" class="form-control choice3" value="${question.choices[2] || ''}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>الإجابة الصحيحة</label>
+                                        <select class="form-control multichoice-answer">
+                                            <option value="0" ${question.answer === 0 ? 'selected' : ''}>الخيار الأول</option>
+                                            <option value="1" ${question.answer === 1 ? 'selected' : ''}>الخيار الثاني</option>
+                                            <option value="2" ${question.answer === 2 ? 'selected' : ''}>الخيار الثالث</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // إضافة السؤال إلى الحاوية
+                        questionsContainer.appendChild(questionContainer);
+                    });
+
+                    // تعديل زر الحفظ ليقوم بالتحديث
+                    const saveButton = document.querySelector('#competitionForm button[type="submit"]');
+                    saveButton.textContent = 'تحديث المسابقة';
+                    saveButton.onclick = (event) => {
+                        event.preventDefault();
+                        updateCompetition(competitionId);
+                    };
+                } else {
+                    alert('لم يتم العثور على المسابقة');
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في جلب تفاصيل المسابقة:', error);
+                alert('حدث خطأ في تحميل تفاصيل المسابقة');
+            });
+    }
+
+    // دالة تحديث المسابقة
+    function updateCompetition(competitionId) {
+        // جمع بيانات المسابقة المحدثة
+        const competitionTitle = document.getElementById('competitionTitle').value.trim();
+        const startDateTime = document.getElementById('startDateTime').value;
+        const endDateTime = document.getElementById('endDateTime').value;
+        const competitionStatus = document.getElementById('competitionStatus').value;
+        
+        // مصفوفة لتخزين الأسئلة
+        const questions = [];
+        
+        // جمع الأسئلة
+        const questionContainers = document.querySelectorAll('.question-container');
+        questionContainers.forEach((container, index) => {
+            const questionType = container.querySelector('.question-type').value;
+            const questionText = container.querySelector('.question-text').value.trim();
+            
+            // التحقق من عدم وجود أسئلة فارغة
+            if (!questionText) {
+                alert(`يرجى إدخال نص السؤال رقم ${index + 1}`);
+                return;
+            }
+            
+            const questionObj = {
+                type: questionType,
+                text: questionText
+            };
+            
+            if (questionType === 'truefalse') {
+                questionObj.answer = container.querySelector('.truefalse-answer').value === 'true';
+            } else if (questionType === 'multichoice') {
+                // جمع الخيارات
+                const choices = [
+                    container.querySelector('.choice1').value.trim(),
+                    container.querySelector('.choice2').value.trim(),
+                    container.querySelector('.choice3').value.trim()
+                ];
+                
+                // التحقق من عدم وجود خيارات فارغة
+                if (choices.some(choice => !choice)) {
+                    alert(`يرجى إدخال جميع خيارات السؤال رقم ${index + 1}`);
+                    return;
+                }
+                
+                questionObj.choices = choices;
+                questionObj.answer = parseInt(container.querySelector('.multichoice-answer').value);
+            }
+            
+            questions.push(questionObj);
+        });
+        
+        // التحقق من وجود أسئلة
+        if (questions.length === 0) {
+            alert('يجب إضافة أسئلة للمسابقة');
+            return;
+        }
+        
+        // إنشاء كائن المسابقة المحدثة
+        const updatedCompetition = {
+            id: competitionId,
+            title: competitionTitle,
+            startDate: startDateTime,
+            endDate: endDateTime,
+            status: competitionStatus,
+            questions: questions
+        };
+        
+        // محاولة تحديث المسابقة
+        competitionDB.updateCompetition(updatedCompetition)
+            .then(() => {
+                console.log('تم تحديث المسابقة بنجاح');
+                
+                // إعادة تعيين النموذج
+                document.getElementById('competitionForm').reset();
+                document.getElementById('questionsContainer').innerHTML = '';
+                
+                // تحديث قوائم المسابقات
+                loadCompetitions();
+                loadAdminCompetitions();
+                
+                // عرض رسالة نجاح
+                alert('تم تحديث المسابقة بنجاح');
+            })
+            .catch(error => {
+                console.error('خطأ في تحديث المسابقة:', error);
+                alert('حدث خطأ أثناء تحديث المسابقة: ' + error.message);
+            });
+    }
+
+    // دالة إضافة سؤال جديد
+    function addNewQuestion() {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const questionType = document.getElementById('questionType').value;
+
+        // إنشاء حاوية السؤال الجديد
+        const questionContainer = document.createElement('div');
+        questionContainer.classList.add('question-container', 'card', 'mb-3');
+        
+        // إنشاء محتوى السؤال بناءً على النوع
+        if (questionType === 'truefalse') {
+            questionContainer.innerHTML = `
+                <div class="card-header">
+                    <span class="badge bg-info">صح/خطأ</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>نص السؤال</label>
+                        <input type="text" class="form-control question-text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الإجابة الصحيحة</label>
+                        <select class="form-control truefalse-answer">
+                            <option value="true">صح</option>
+                            <option value="false">خطأ</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question mt-2">
+                        <i class="fas fa-trash"></i> حذف السؤال
+                    </button>
+                </div>
+            `;
+        } else {
+            questionContainer.innerHTML = `
+                <div class="card-header">
+                    <span class="badge bg-primary">اختيار من متعدد</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>نص السؤال</label>
+                        <input type="text" class="form-control question-text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار الأول</label>
+                        <input type="text" class="form-control choice1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار الثاني</label>
+                        <input type="text" class="form-control choice2" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار الثالث</label>
+                        <input type="text" class="form-control choice3" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الإجابة الصحيحة</label>
+                        <select class="form-control multichoice-answer">
+                            <option value="0">الخيار الأول</option>
+                            <option value="1">الخيار الثاني</option>
+                            <option value="2">الخيار الثالث</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-question mt-2">
+                        <i class="fas fa-trash"></i> حذف السؤال
+                    </button>
+                </div>
+            `;
+        }
+
+        // إضافة معالج حدث لحذف السؤال
+        questionContainer.querySelector('.remove-question').addEventListener('click', () => {
+            questionsContainer.removeChild(questionContainer);
+        });
+
+        // إضافة السؤال إلى الحاوية
+        questionsContainer.appendChild(questionContainer);
+    }
+
+    // معالج حدث زر إضافة السؤال
+    document.getElementById('addQuestionBtn').addEventListener('click', addNewQuestion);
+
+    // دالة تبديل نوع السؤال
+    function toggleQuestionType(selectElement) {
+        // العثور على حاوية السؤال الأب
+        const questionContainer = selectElement.closest('.question-container');
+        
+        // العثور على أقسام الأسئلة المختلفة
+        const truefalseSection = questionContainer.querySelector('.truefalse-section');
+        const multichoiceSection = questionContainer.querySelector('.multichoice-section');
+        
+        // تحديد نوع السؤال
+        if (selectElement.value === 'truefalse') {
+            // إظهار قسم صح/خطأ وإخفاء قسم اختيار من متعدد
+            truefalseSection.style.display = 'block';
+            multichoiceSection.style.display = 'none';
+            
+            // مسح قيم اختيار من متعدد
+            multichoiceSection.querySelectorAll('input').forEach(input => input.value = '');
+        } else {
+            // إظهار قسم اختيار من متعدد وإخفاء قسم صح/خطأ
+            truefalseSection.style.display = 'none';
+            multichoiceSection.style.display = 'block';
+            
+            // مسح قيمة صح/خطأ
+            truefalseSection.querySelector('select').selectedIndex = 0;
+        }
+    }
+
+    // دالة التحقق من صحة نموذج الأسئلة
+    function validateQuestionForm() {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const questions = questionsContainer.querySelectorAll('.question-container');
+        
+        // التحقق من وجود أسئلة
+        if (questions.length === 0) {
+            alert('يجب إضافة أسئلة للمسابقة');
+            return false;
+        }
+        
+        // مصفوفة لتخزين الأسئلة المتحققة
+        const validatedQuestions = [];
+        
+        // التحقق من كل سؤال
+        for (let i = 0; i < questions.length; i++) {
+            const questionContainer = questions[i];
+            const questionType = questionContainer.querySelector('.question-type').value;
+            const questionText = questionContainer.querySelector('.question-text').value.trim();
+            
+            // التحقق من نص السؤال
+            if (!questionText) {
+                alert(`يرجى إدخال نص السؤال رقم ${i + 1}`);
+                return false;
+            }
+            
+            // كائن السؤال
+            const questionObj = {
+                type: questionType,
+                text: questionText
+            };
+            
+            // التحقق من نوع السؤال
+            if (questionType === 'truefalse') {
+                // التحقق من إجابة صح/خطأ
+                const truefalseAnswer = questionContainer.querySelector('.truefalse-answer').value;
+                questionObj.answer = truefalseAnswer === 'true';
+            } else if (questionType === 'multichoice') {
+                // جمع الخيارات
+                const choices = [
+                    questionContainer.querySelector('.choice1').value.trim(),
+                    questionContainer.querySelector('.choice2').value.trim(),
+                    questionContainer.querySelector('.choice3').value.trim()
+                ];
+                
+                // التحقق من عدم وجود خيارات فارغة
+                if (choices.some(choice => !choice)) {
+                    alert(`يرجى إدخال جميع خيارات السؤال رقم ${i + 1}`);
+                    return false;
+                }
+                
+                // التحقق من تكرار الخيارات
+                if (new Set(choices).size !== choices.length) {
+                    alert(`يجب أن تكون خيارات السؤال رقم ${i + 1} مختلفة`);
+                    return false;
+                }
+                
+                questionObj.choices = choices;
+                questionObj.answer = parseInt(questionContainer.querySelector('.multichoice-answer').value);
+            }
+            
+            // إضافة السؤال المتحقق
+            validatedQuestions.push(questionObj);
+        }
+        
+        return validatedQuestions;
+    }
+    </script>
+</body>
+</html>

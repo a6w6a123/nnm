@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - منصة المسابقات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="text-center mb-0">لوحة إدارة المسابقات</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Login Section -->
+                        <div id="adminLogin" class="mb-4">
+                            <h3>تسجيل الدخول</h3>
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="adminPassword" class="form-label">كلمة المرور</label>
+                                    <input type="password" class="form-control" id="adminPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-success">دخول</button>
+                            </form>
+                        </div>
+
+                        <!-- Dashboard Content (Hidden by Default) -->
+                        <div id="dashboardContent" style="display:none;">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header">إنشاء مسابقة جديدة</div>
+                                        <div class="card-body">
+                                            <form id="competitionForm">
+                                                <div class="mb-3">
+                                                    <label>عنوان المسابقة</label>
+                                                    <input type="text" id="competitionTitle" class="form-control" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label>تاريخ البدء</label>
+                                                    <input type="datetime-local" id="startDateTime" class="form-control" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label>تاريخ الانتهاء</label>
+                                                    <input type="datetime-local" id="endDateTime" class="form-control" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">حفظ المسابقة</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">إضافة أسئلة</div>
+                                        <div class="card-body">
+                                            <form id="questionForm">
+                                                <div class="mb-3">
+                                                    <label>نص السؤال</label>
+                                                    <textarea id="questionText" class="form-control" required></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label>نوع السؤال</label>
+                                                    <select id="questionType" class="form-select" required>
+                                                        <option value="trueOrFalse">صح أو خطأ</option>
+                                                        <option value="multipleChoice">اختيار من متعدد</option>
+                                                    </select>
+                                                </div>
+                                                <div id="choicesSection" style="display:none;">
+                                                    <div class="mb-3">
+                                                        <label>الخيار الأول</label>
+                                                        <input type="text" id="choice1" class="form-control">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label>الخيار الثاني</label>
+                                                        <input type="text" id="choice2" class="form-control">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label>الخيار الثالث</label>
+                                                        <input type="text" id="choice3" class="form-control">
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn btn-success">إضافة السؤال</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Debugging function to log detailed Firebase configuration
+        function debugFirebaseConfig() {
+            console.log('Firebase Configuration:', {
+                apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
+                authDomain: firebaseConfig.authDomain,
+                databaseURL: firebaseConfig.databaseURL,
+                projectId: firebaseConfig.projectId
+            });
+
+            // Check Firebase initialization
+            try {
+                const app = firebase.apps.length;
+                console.log('Firebase Apps Initialized:', app);
+                
+                // Test database reference
+                const testRef = database.ref('.info/connected');
+                testRef.on('value', (snapshot) => {
+                    const connected = snapshot.val();
+                    console.log('Firebase Database Connection:', connected ? 'Connected' : 'Disconnected');
+                });
+            } catch (error) {
+                console.error('Firebase Initialization Error:', error);
+            }
+        }
+
+        // Enhanced Competition Form Submission
+        document.getElementById('competitionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Debug Firebase configuration before submission
+            debugFirebaseConfig();
+            
+            const title = document.getElementById('competitionTitle').value;
+            const startDate = document.getElementById('startDateTime').value;
+            const endDate = document.getElementById('endDateTime').value;
+            const status = document.getElementById('competitionStatus').value;
+
+            console.log('Competition Data:', {
+                title,
+                startDate,
+                endDate,
+                status,
+                questionsCount: state.questions.length
+            });
+
+            if (state.questions.length === 0) {
+                alert('يرجى إضافة أسئلة للمسابقة');
+                return;
+            }
+
+            try {
+                // Detailed logging for competition creation
+                console.log('Attempting to create competition in Firebase');
+                
+                // Create new competition
+                const newCompetitionRef = database.ref('competitions').push();
+                console.log('New Competition Reference:', newCompetitionRef.key);
+                
+                const competitionData = {
+                    title: title,
+                    startDate: startDate,
+                    endDate: endDate,
+                    status: status,
+                    questions: state.questions,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                console.log('Competition Data to Save:', competitionData);
+                
+                await newCompetitionRef.set(competitionData)
+                    .then(() => {
+                        console.log('Competition saved successfully');
+                        alert('تم إنشاء المسابقة بنجاح');
+                        
+                        // Reset forms
+                        document.getElementById('competitionForm').reset();
+                        state.questions = [];
+                        loadCompetitions();
+                    })
+                    .catch((error) => {
+                        console.error('Detailed Set Error:', {
+                            code: error.code,
+                            message: error.message,
+                            stack: error.stack
+                        });
+                        alert('حدث خطأ في حفظ المسابقة: ' + error.message);
+                    });
+            } catch (error) {
+                console.error('Competition Creation Catch Error:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                alert('حدث خطأ غير متوقع في إنشاء المسابقة');
+            }
+        });
+    </script>
+    <script src="../js/database.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>
